@@ -47,13 +47,14 @@ object Equation {
 
         list.add(DataPoint(1.0, 1.0))
 
-        var i = XLow + eps
-        while (i <= XHigh) {
-            list.add(DataPoint(i, list.last().y + (eps * getFunctionValue(list.last().x + eps / 2, list.last().y + eps * getFunctionValue(list.last().x, list.last().y) / 2))))
-            i+= eps
+        var x = XLow + eps
+        while (x <= XHigh) {
+            val x_prev = list.last().x
+            val y_prev = list.last().y
+            list.add(DataPoint(x, y_prev + eps / 2 * (getFunctionValue(x_prev, y_prev) + getFunctionValue(x, y_prev + eps * getFunctionValue(x_prev, y_prev)))))
+            x+= eps
         }
         return list.toTypedArray()
     }
-
 
 }
