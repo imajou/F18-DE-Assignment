@@ -1,4 +1,4 @@
-package ru.innopolis.imajou.f18deassignment
+package ru.innopolis.imajou.f18_de_assignment
 
 import org.junit.Test
 
