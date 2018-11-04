@@ -8,152 +8,287 @@ import com.jjoe64.graphview.series.LineGraphSeries
 import kotlinx.android.synthetic.main.activity_main.*
 import ru.innopolis.imajou.f18_de_assignment.R
 import ru.innopolis.imajou.f18_de_assignment.model.Equation
-import java.text.DecimalFormat
+import ru.innopolis.imajou.f18_de_assignment.model.EquationVariant9
+import ru.innopolis.imajou.f18_de_assignment.model.ErrorGlobal
 
 
 class MainActivity : AppCompatActivity() {
 
-    private var exactSolution = LineGraphSeries(Equation.dataExactSolution)
-    private var eulerSolution = LineGraphSeries(Equation.dataEulerSolution)
-    private var improvedEulerSolution = LineGraphSeries(Equation.dataEulerImprSolution)
+    private var variant: EquationVariant9 = EquationVariant9(1.0, 1.0)      // Init variant
+    private var equation: Equation = Equation(variant)                              // Init equation
 
-    private var eulerError = LineGraphSeries(Equation.dataEulerError)
-    private var eulerImprError = LineGraphSeries(Equation.dataEulerImprError)
+    private var plotExact = LineGraphSeries(equation.solutionExact)
+    private var plotEuler = LineGraphSeries(equation.solutionEuler)
+    private var plotEulerImproved = LineGraphSeries(equation.solutionEulerImpr)
+    private var plotRungeKutta = LineGraphSeries(equation.solutionRungeKutta)
 
-    private var graphTypeShowed = "FUNCTION_GRAPH"
+    private var errorEuler = LineGraphSeries(equation.errorEulerLocal)
+    private var errorEulerImproved = LineGraphSeries(equation.errorEulerImprLocal)
+    private var errorRungeKutta = LineGraphSeries(equation.errorRungeKuttaLocal)
+
+    private var errorGlobalEuler = LineGraphSeries(ErrorGlobal.euler(variant, equation.fromX, equation.toX))
+    private var errorGlobalEulerImproved = LineGraphSeries(ErrorGlobal.eulerImproved(variant, equation.fromX, equation.toX))
+    private var errorGlobalRungeKutta = LineGraphSeries(ErrorGlobal.rungeKutta(variant, equation.fromX, equation.toX))
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        initEps()
         initCheckBoxes()
         initSeekBar()
         initFunctionGraphs()
         initErrorGraphs()
+        initErrorGlobalGraphs()
         initButtons()
     }
 
+    /**
+     * Initialize graphics switching radio buttons
+     */
     private fun initButtons() {
-        btn_switch_graphs.setOnClickListener {
-            if (graphTypeShowed == "FUNCTION_GRAPH"){
-                graphTypeShowed = "ERROR_GRAPH"
-                btn_switch_graphs.text = "Show graphs"
-                function_graph.visibility = View.GONE
-                error_graph.visibility = View.VISIBLE
-                return@setOnClickListener
-            }
-            if (graphTypeShowed == "ERROR_GRAPH") {
-                graphTypeShowed = "FUNCTION_GRAPH"
-                btn_switch_graphs.text = "Show errors"
-                function_graph.visibility = View.VISIBLE
-                error_graph.visibility = View.GONE
-                return@setOnClickListener
+        btn_group_graph_params.setOnCheckedChangeListener { group, checkedId ->
+            when (checkedId) {
+                R.id.btn_show_graphs -> {
+                    graph_error_local.visibility = View.GONE
+                    graph_error_global.visibility = View.GONE
+                    graph_function.visibility = View.VISIBLE
+                }
+                R.id.btn_show_local_errors -> {
+                    graph_function.visibility = View.GONE
+                    graph_error_global.visibility = View.GONE
+                    graph_error_local.visibility = View.VISIBLE
+                }
+                R.id.btn_show_global_errors -> {
+                    graph_function.visibility = View.GONE
+                    graph_error_local.visibility = View.GONE
+                    graph_error_global.visibility = View.VISIBLE
+                }
             }
         }
     }
 
-    private fun initFunctionGraphs(){
-        function_graph.viewport.isScrollable = true
-        function_graph.viewport.isScalable = true
-        function_graph.viewport.setScrollableY(false)
-        function_graph.viewport.setScalableY(false)
+    /**
+     * Initialize function graphics
+     */
+    private fun initFunctionGraphs() {
+        graph_function.viewport.isScrollable = true
+        graph_function.viewport.isScalable = true
+        graph_function.viewport.setScrollableY(false)
+        graph_function.viewport.setScalableY(false)
 
-        function_graph.viewport.isXAxisBoundsManual = true
-        function_graph.viewport.setMinX(Equation.XLow)
-        function_graph.viewport.setMaxX(Equation.XHigh)
+        graph_function.viewport.isXAxisBoundsManual = true
+        graph_function.viewport.setMinX(equation.fromX)
+        graph_function.viewport.setMaxX(equation.toX)
 
-        function_graph.viewport.isYAxisBoundsManual = true
-        function_graph.viewport.setMinY(1.0)
-        function_graph.viewport.setMaxY(4.0)
+        plotExact.color = resources.getColor(R.color.materialRed_400)
+        plotExact.title = "Exact solution"
 
-        exactSolution.color = resources.getColor(R.color.materialRed_400)
-        exactSolution.title = "Exact solution"
+        plotEuler.color = resources.getColor(R.color.materialBlue_400)
+        plotEuler.title = "Euler method"
 
-        eulerSolution.color = resources.getColor(R.color.materialBlue_400)
-        eulerSolution.title = "Euler method"
+        plotEulerImproved.color = resources.getColor(R.color.materialPurple_400)
+        plotEulerImproved.title = "Impr. Euler method"
 
-        improvedEulerSolution.color = resources.getColor(R.color.materialPurple_400)
-        improvedEulerSolution.title = "Impr. Euler method"
+        plotRungeKutta.color = resources.getColor(R.color.materialGreen_400)
+        plotRungeKutta.title = "Runge-Kutta method"
 
-        function_graph.addSeries(exactSolution)
-        function_graph.addSeries(eulerSolution)
-        function_graph.addSeries(improvedEulerSolution)
+        graph_function.addSeries(plotExact)
+        graph_function.addSeries(plotEuler)
+        graph_function.addSeries(plotEulerImproved)
+        graph_function.addSeries(plotRungeKutta)
     }
 
-    private fun initErrorGraphs(){
-        error_graph.viewport.isScrollable = true
-        error_graph.viewport.isScalable = true
-        error_graph.viewport.setScrollableY(false)
-        error_graph.viewport.setScalableY(false)
+    /**
+     * Initialize local error graphics
+     */
+    private fun initErrorGraphs() {
+        graph_error_local.viewport.isScrollable = true
+        graph_error_local.viewport.isScalable = true
+        graph_error_local.viewport.setScrollableY(false)
+        graph_error_local.viewport.setScalableY(false)
 
-        eulerError.color = resources.getColor(R.color.materialBlue_400)
-        eulerError.title = "Euler error"
+        errorEuler.color = resources.getColor(R.color.materialBlue_400)
+        errorEuler.title = "Euler error"
 
-        eulerImprError.color = resources.getColor(R.color.materialPurple_400)
-        eulerImprError.title = "Euler impr. title"
+        errorEulerImproved.color = resources.getColor(R.color.materialPurple_400)
+        errorEulerImproved.title = "Euler impr. error"
 
-        error_graph.addSeries(eulerError)
-        error_graph.addSeries(eulerImprError)
+        errorRungeKutta.color = resources.getColor(R.color.materialGreen_400)
+        errorRungeKutta.title = "Runge-Kutta error"
+
+        graph_error_local.addSeries(errorEuler)
+        graph_error_local.addSeries(errorEulerImproved)
+        graph_error_local.addSeries(errorRungeKutta)
     }
 
-    private fun initEps() {
-        seekbar_eps.progress = 10
-        Equation.eps = 0.1
-        tw_eps_value.text = "0.1"
+    /**
+     * Initialize global error graphics
+     */
+    private fun initErrorGlobalGraphs() {
+        graph_error_global.viewport.isScrollable = true
+        graph_error_global.viewport.isScalable = true
+        graph_error_global.viewport.setScrollableY(false)
+        graph_error_global.viewport.setScalableY(false)
+
+        graph_function.viewport.isXAxisBoundsManual = true
+        graph_function.viewport.setMinX(1.0)
+        graph_function.viewport.setMaxX(100.0)
+
+        errorGlobalEuler.color = resources.getColor(R.color.materialBlue_400)
+        errorGlobalEuler.title = "Euler global error"
+
+        errorGlobalEulerImproved.color = resources.getColor(R.color.materialPurple_400)
+        errorGlobalEulerImproved.title = "Euler improved global error"
+
+        errorGlobalRungeKutta.color = resources.getColor(R.color.materialGreen_400)
+        errorGlobalRungeKutta.title = "Runge-Kutta global error"
+
+        graph_error_global.addSeries(errorGlobalEuler)
+        graph_error_global.addSeries(errorGlobalEulerImproved)
+        graph_error_global.addSeries(errorGlobalRungeKutta)
     }
 
+    /**
+     * Update grapics and datasets
+     */
     private fun updateDataset() {
-        Equation.updateData()
+        equation.updateData()
 
-        exactSolution.resetData(Equation.dataExactSolution)
-        eulerSolution.resetData(Equation.dataEulerSolution)
-        improvedEulerSolution.resetData(Equation.dataEulerImprSolution)
+        plotExact.resetData(equation.solutionExact)
+        plotEuler.resetData(equation.solutionEuler)
+        plotEulerImproved.resetData(equation.solutionEulerImpr)
+        plotRungeKutta.resetData(equation.solutionRungeKutta)
 
-        eulerError.resetData(Equation.dataEulerError)
+        graph_function.viewport.setMinX(equation.fromX)
+        graph_function.viewport.setMaxX(equation.toX)
+
+        errorEuler.resetData(equation.errorEulerLocal)
+        errorEulerImproved.resetData(equation.errorEulerImprLocal)
+        errorRungeKutta.resetData(equation.errorRungeKuttaLocal)
     }
 
+    /**
+     * Init control panel graphics show/hide checkboxes
+     */
     private fun initCheckBoxes() {
         checkbox_exact_solution.setOnCheckedChangeListener { buttonView, isChecked ->
-            if (isChecked) function_graph.addSeries(exactSolution)
-            else function_graph.removeSeries(exactSolution)
+            if (isChecked) graph_function.addSeries(plotExact)
+            else graph_function.removeSeries(plotExact)
         }
         checkbox_euler_method.setOnCheckedChangeListener { buttonView, isChecked ->
             if (isChecked) {
-                function_graph.addSeries(eulerSolution)
-                error_graph.addSeries(eulerError)
-            }
-            else {
-                function_graph.removeSeries(eulerSolution)
-                error_graph.removeSeries(eulerError)
+                graph_function.addSeries(plotEuler)
+                graph_error_local.addSeries(errorEuler)
+                graph_error_global.addSeries(errorGlobalEuler)
+            } else {
+                graph_function.removeSeries(plotEuler)
+                graph_error_local.removeSeries(errorEuler)
+                graph_error_global.removeSeries(errorGlobalEuler)
             }
         }
         checkbox_improved_euler_method.setOnCheckedChangeListener { buttonView, isChecked ->
             if (isChecked) {
-                function_graph.addSeries(improvedEulerSolution)
-                error_graph.addSeries(eulerImprError)
+                graph_function.addSeries(plotEulerImproved)
+                graph_error_local.addSeries(errorEulerImproved)
+                graph_error_global.addSeries(errorGlobalEulerImproved)
+            } else {
+                graph_function.removeSeries(plotEulerImproved)
+                graph_error_local.removeSeries(errorEulerImproved)
+                graph_error_global.removeSeries(errorGlobalEulerImproved)
             }
-            else {
-                function_graph.removeSeries(improvedEulerSolution)
-                error_graph.removeSeries(eulerImprError)
+        }
+        checkbox_runge_kutta_method.setOnCheckedChangeListener { buttonView, isChecked ->
+            if (isChecked) {
+                graph_function.addSeries(plotRungeKutta)
+                graph_error_local.addSeries(errorRungeKutta)
+                graph_error_global.addSeries(errorGlobalRungeKutta)
+            } else {
+                graph_function.removeSeries(plotRungeKutta)
+                graph_error_local.removeSeries(errorRungeKutta)
+                graph_error_global.removeSeries(errorGlobalRungeKutta)
             }
         }
     }
 
+    /**
+     * Initialize control panel seekbar
+     */
     private fun initSeekBar() {
-        seekbar_eps.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+
+        // Seekbar for h
+        seekbar_h.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
 
             override fun onProgressChanged(seekBar: SeekBar, i: Int, b: Boolean) {
-                tw_eps_value.text = DecimalFormat("#.##").format(i.toDouble() / 100 + 0.01)
+                tw_steps_value.text = "${(i + 1)} steps"
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar) {
             }
 
             override fun onStopTrackingTouch(seekBar: SeekBar) {
-                val newEps = DecimalFormat("#.##").format(seekBar.progress.toDouble() / 100 + 0.01).toDouble()
-                Equation.eps = newEps
-                tw_eps_value.text = newEps.toString()
+                val newH = seekBar.progress + 1
+                tw_steps_value.text = "$newH steps"
+                equation.steps = newH
+                updateDataset()
+            }
+        })
+
+        // Seekbar for x0
+        seekbar_x0.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+
+            override fun onProgressChanged(seekBar: SeekBar, i: Int, b: Boolean) {
+                tw_x0_value.text = "x0=${(i + 1).toDouble() / 10}"
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar) {
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar) {
+                val newX0: Double = (seekBar.progress.toDouble() + 1) / 10
+                tw_x0_value.text = "x0=$newX0"
+                variant.x0 = newX0
+                equation.fromX = newX0
+                equation.toX = newX0 * 2
+                updateDataset()
+            }
+        })
+
+        // Seekbar for y0
+        seekbar_y0.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+
+            override fun onProgressChanged(seekBar: SeekBar, i: Int, b: Boolean) {
+                tw_y0_value.text = "y0=${(i + 1).toDouble() / 10}"
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar) {
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar) {
+                val newY0: Double = (seekBar.progress.toDouble() + 1) / 10
+                tw_y0_value.text = "y0=$newY0"
+                variant.y0 = newY0
+                updateDataset()
+            }
+        })
+
+        // Seekbar for X
+        seekbar_xMax.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+
+            override fun onProgressChanged(seekBar: SeekBar, i: Int, b: Boolean) {
+                tw_xMax_value.text = "X=${(i + 1).toDouble() / 10}"
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar) {
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar) {
+                if(seekBar.progress <= seekbar_x0.progress) {
+                    seekBar.progress = seekbar_x0.progress + 1
+                }
+                val newXMax: Double = (seekBar.progress.toDouble() + 1) / 10
+                tw_xMax_value.text = "X=$newXMax"
+                equation.toX = newXMax
+                seekbar_x0.max = seekBar.progress - 1
                 updateDataset()
             }
         })

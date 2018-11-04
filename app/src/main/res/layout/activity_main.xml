@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               xmlns:tools="http://schemas.android.com/tools"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
+              android:layout_width="match_parent" android:layout_height="match_parent"
               tools:context=".activities.MainActivity">
 
     <ScrollView
@@ -41,28 +40,53 @@
                             android:layout_margin="@dimen/space_default">
 
                         <com.jjoe64.graphview.GraphView
-                                android:id="@+id/function_graph"
+                                android:id="@+id/graph_function"
                                 android:visibility="visible"
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"/>
 
                         <com.jjoe64.graphview.GraphView
-                                android:id="@+id/error_graph"
+                                android:id="@+id/graph_error_local"
                                 android:visibility="gone"
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"/>
 
+                        <com.jjoe64.graphview.GraphView
+                                android:id="@+id/graph_error_global"
+                                android:visibility="gone"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"/>
+
+
                     </FrameLayout>
 
-                    <android.support.design.button.MaterialButton
-                            android:id="@+id/btn_switch_graphs"
-                            android:layout_width="wrap_content"
+                    <RadioGroup
+                            android:id="@+id/btn_group_graph_params"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            android:text="Show errors"
-                            android:layout_gravity="end"
-                            android:layout_marginRight="@dimen/space_default"
-                            android:layout_marginBottom="@dimen/space_default"/>
+                            android:orientation="horizontal"
+                            android:layout_marginLeft="@dimen/space_default"
+                            android:layout_marginRight="@dimen/space_default">
+                        <RadioButton
+                                android:id="@+id/btn_show_graphs"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:checked="true"
+                                android:text="Plot"/>
+                        <Space android:layout_width="8dp" android:layout_height="match_parent"/>
+                        <RadioButton
+                                android:id="@+id/btn_show_local_errors"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Local errors"/>
+                        <Space android:layout_width="8dp" android:layout_height="match_parent"/>
+                        <RadioButton
+                                android:id="@+id/btn_show_global_errors"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Global error"/>
+                    </RadioGroup>
+                    <Space android:layout_width="wrap_content" android:layout_height="@dimen/space_default"/>
 
                 </LinearLayout>
             </android.support.v7.widget.CardView>
@@ -116,6 +140,14 @@
                                 android:checked="true"
                                 android:buttonTint="@color/materialPurple_400"
                                 android:text="Improved Euler method"/>
+
+                        <CheckBox
+                                android:id="@+id/checkbox_runge_kutta_method"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:checked="true"
+                                android:buttonTint="@color/materialGreen_400"
+                                android:text="Runge-Kutta method"/>
                     </LinearLayout>
 
                     <Space
@@ -124,27 +156,100 @@
 
                     <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content">
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
 
                         <TextView
-                                android:layout_width="wrap_content"
+                                android:id="@+id/tw_steps_value"
+                                android:layout_width="64dp"
+                                android:textAlignment="viewEnd"
                                 android:layout_height="wrap_content"
-                                android:layout_marginLeft="8dp"
-                                android:text="ε="/>
-
-                        <TextView
-                                android:id="@+id/tw_eps_value"
-                                android:layout_width="48dp"
-                                android:textAlignment="viewStart"
-                                android:layout_height="wrap_content"/>
+                                android:text="Steps"/>
 
                         <SeekBar
-                                android:id="@+id/seekbar_eps"
+                                android:id="@+id/seekbar_h"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:max="50"
+                                android:max="99"
                                 android:progress="10"/>
                     </LinearLayout>
+
+                    <Space
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/space_default"/>
+
+                    <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                        <TextView
+                                android:id="@+id/tw_xMax_value"
+                                android:layout_width="64dp"
+                                android:textAlignment="viewEnd"
+                                android:layout_height="wrap_content"
+                                android:text="X"/>
+
+                        <SeekBar
+                                android:id="@+id/seekbar_xMax"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:max="99"
+                                android:progress="23"/>
+                    </LinearLayout>
+
+                    <Space
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/space_default"/>
+
+                    <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                        <TextView
+                                android:id="@+id/tw_x0_value"
+                                android:layout_width="64dp"
+                                android:textAlignment="viewEnd"
+                                android:layout_height="wrap_content"
+                                android:text="x0"/>
+
+                        <SeekBar
+                                android:id="@+id/seekbar_x0"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:max="22"
+                                android:progress="10"/>
+                    </LinearLayout>
+
+                    <Space
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/space_default"/>
+
+                    <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                        <TextView
+                                android:id="@+id/tw_y0_value"
+                                android:layout_width="64dp"
+                                android:textAlignment="viewEnd"
+                                android:layout_height="wrap_content"
+                                android:text="y0"/>
+
+                        <SeekBar
+                                android:id="@+id/seekbar_y0"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:max="99"
+                                android:progress="10"/>
+                    </LinearLayout>
+
+                    <Space
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/space_default"/>
+
                 </LinearLayout>
             </android.support.v7.widget.CardView>
 

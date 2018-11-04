@@ -1,105 +1,39 @@
 package ru.innopolis.imajou.f18_de_assignment.model
 
 import com.jjoe64.graphview.series.DataPoint
-import ru.innopolis.imajou.f18_de_assignment.model.Equation.Companion.getEulerImprSolutionY
-import ru.innopolis.imajou.f18_de_assignment.model.Equation.Companion.getEulerSolutionY
-import ru.innopolis.imajou.f18_de_assignment.model.Equation.Companion.getExactDifferentialSolution
 
-object Equation {
+class Equation(var variant: EquationVariant) {
 
-    var eps = 0.1
+    var fromX = 1.0     // Updated through initial value problem
+    var toX = 2.3       // Updated by user input
 
-    var dataExactSolution: Array<DataPoint> = exactSolution()
-    var dataEulerSolution: Array<DataPoint> = eulerMethod()
-    var dataEulerImprSolution: Array<DataPoint> = eulerImprMethod()
+    var steps = 10      // Updated by user
 
-    var dataEulerError: Array<DataPoint> = eulerError()
-    var dataEulerImprError: Array<DataPoint> = eulerImprError()
+    // Base init of all solution arrays
+    var solutionExact: Array<DataPoint> = Solution.exact(variant, steps, fromX, toX)
+    var solutionEuler: Array<DataPoint> = Solution.euler(variant, steps, fromX, toX)
+    var solutionEulerImpr: Array<DataPoint> = Solution.eulerImproved(variant, steps, fromX, toX)
+    var solutionRungeKutta: Array<DataPoint> = Solution.rungeKutta(variant, steps, fromX, toX)
 
-    const val XLow = 1.0
-    const val XHigh = 2.3
+    // Base init of all local error arrays
+    var errorEulerLocal: Array<DataPoint> = ErrorLocal.euler(variant, steps, fromX, toX)
+    var errorEulerImprLocal: Array<DataPoint> = ErrorLocal.eulerImproved(variant, steps, fromX, toX)
+    var errorRungeKuttaLocal: Array<DataPoint> = ErrorLocal.rungeKutta(variant, steps, fromX, toX)
 
+    /**
+     * Recalculate all solutions and errors
+     */
     fun updateData() {
-        dataExactSolution = exactSolution()
-        dataEulerSolution = eulerMethod()
-        dataEulerImprSolution = eulerImprMethod()
 
-        dataEulerError = eulerError()
-        dataEulerImprError = eulerImprError()
+        if (steps <= 0 || steps > 200) return
+
+        solutionExact = Solution.exact(variant, steps, fromX, toX)
+        solutionEuler = Solution.euler(variant, steps, fromX, toX)
+        solutionEulerImpr = Solution.eulerImproved(variant, steps, fromX, toX)
+        solutionRungeKutta = Solution.rungeKutta(variant, steps, fromX, toX)
+
+        errorEulerLocal = ErrorLocal.euler(variant, steps, fromX, toX)
+        errorEulerImprLocal = ErrorLocal.eulerImproved(variant, steps, fromX, toX)
+        errorRungeKuttaLocal = ErrorLocal.rungeKutta(variant, steps, fromX, toX)
     }
-
-
-    internal object Companion {
-        fun getExactDifferentialSolution(x: Double): Double = x * Math.sqrt(2 * Math.log(x) + 1)
-
-        fun getFunctionValue(x: Double, y: Double): Double = ((x / y) + (y / x))
-
-        fun getEulerSolutionY(x_prev: Double, y_prev: Double, eps: Double): Double =
-            y_prev + eps * getFunctionValue(x_prev, y_prev)
-
-        fun getEulerImprSolutionY(x_prev: Double, y_prev: Double, x: Double, eps: Double): Double =
-            y_prev + eps / 2 * (getFunctionValue(x_prev, y_prev) + getFunctionValue(
-                x,
-                y_prev + eps * getFunctionValue(x_prev, y_prev)
-            ))
-    }
-
-    private fun exactSolution(): Array<DataPoint> {
-        val list: MutableList<DataPoint> = mutableListOf()
-
-        var x = XLow
-        while (x <= XHigh) {
-            list.add(DataPoint(x, getExactDifferentialSolution(x)))
-            x += eps
-        }
-
-        return list.toTypedArray()
-    }
-
-    private fun eulerMethod(): Array<DataPoint> {
-        val list: MutableList<DataPoint> = mutableListOf()
-
-        list.add(DataPoint(1.0, 1.0))
-
-        var x = XLow + eps
-        while (x <= XHigh) {
-            val x_prev = list.last().x
-            val y_prev = list.last().y
-            list.add(DataPoint(x, getEulerSolutionY(x_prev, y_prev, eps)))
-            x += eps
-        }
-        return list.toTypedArray()
-    }
-
-    private fun eulerImprMethod(): Array<DataPoint> {
-        val list: MutableList<DataPoint> = mutableListOf()
-
-        list.add(DataPoint(1.0, 1.0))
-
-        var x = XLow + eps
-        while (x <= XHigh) {
-            val x_prev = list.last().x
-            val y_prev = list.last().y
-            list.add(DataPoint(x, getEulerImprSolutionY(x_prev, y_prev, x, eps)))
-            x += eps
-        }
-        return list.toTypedArray()
-    }
-
-    private fun eulerError(): Array<DataPoint> {
-        val list: MutableList<DataPoint> = mutableListOf()
-        for (i in 0 until dataExactSolution.size) {
-            list.add(DataPoint(dataExactSolution[i].x, dataExactSolution[i].y - dataEulerSolution[i].y))
-        }
-        return list.toTypedArray()
-    }
-
-    private fun eulerImprError(): Array<DataPoint> {
-        val list: MutableList<DataPoint> = mutableListOf()
-        for (i in 0 until dataExactSolution.size) {
-            list.add(DataPoint(dataExactSolution[i].x, dataExactSolution[i].y - dataEulerImprSolution[i].y))
-        }
-        return list.toTypedArray()
-    }
-
 }
