@@ -1,17 +1,14 @@
 # F18 DE Assignment
 
 
-Innopolis University, 2018
-
-F18 Differential Equations
-
-Programming Assignment Report
-
-Gleb Petrakov
-
-B17-03
-
-Variant 9
+Innopolis University, 2018<br/>
+F18 Differential Equations<br/>
+Programming Assignment Report<br/>
+Gleb Petrakov<br/>
+B17-03<br/>
+Variant 9<br/>
 
 
-**PDF-report included**
+**PDF-report included**<br/>
+**Built APK included**<br/>
+**Plots are zoomable in/out and scrollable!**<br/>
